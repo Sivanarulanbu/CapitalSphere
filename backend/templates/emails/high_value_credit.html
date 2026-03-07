@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Asset Alert</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #020617; color: #f8fafc;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+        style="background-color: #020617;">
+        <tr>
+            <td align="center" style="padding: 40px 10px;">
+                <table role="presentation" width="100%" max-width="600"
+                    style="max-width: 600px; background-color: #0f172a; border-radius: 24px; overflow: hidden; border: 1px solid rgba(0, 212, 170, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                    <!-- Premium Header -->
+                    <tr>
+                        <td
+                            style="padding: 40px 40px 30px 40px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center">
+                                        <!-- Logo with specific aesthetic -->
+                                        <img src="cid:logo.png" alt="CapitalSphere" width="64" height="64"
+                                            style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid #00d4aa; display: block; margin: 0 auto; background-color: #000; object-fit: contain;">
+                                        <h1
+                                            style="margin: 20px 0 5px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; color: #ffffff; text-align: center;">
+                                            Capital<span style="color: #00d4aa;">Sphere</span></h1>
+                                        <p
+                                            style="margin: 0; color: #00d4aa; font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600; text-align: center;">
+                                            Priority Wealth Management</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Content Body -->
+                    <tr>
+                        <td style="padding: 0 40px 40px 40px;">
+                            <div
+                                style="background-color: #00d4aa; padding: 2px; border-radius: 12px; margin-bottom: 25px;">
+                                <div
+                                    style="background-color: #0f172a; border-radius: 10px; padding: 15px; text-align: center;">
+                                    <h2
+                                        style="font-size: 16px; font-weight: 700; color: #00d4aa; margin: 0; text-transform: uppercase; letter-spacing: 0.1em;">
+                                        Priority Credit Alert</h2>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 16px; line-height: 1.6; color: #94a3b8; margin: 0 0 20px 0;">Hello
+                                {{ user.full_name|default:"Valued Customer" }},</p>
+
+                            <p style="font-size: 15px; color: #cbd5e1; margin-bottom: 25px;">A significant credit
+                                transaction has been successfully settled in your account.</p>
+
+                            <!-- High Value Statement -->
+                            <div
+                                style="background: linear-gradient(to right, rgba(0, 212, 170, 0.1), transparent); border-left: 4px solid #00d4aa; border-radius: 4px; padding: 20px; margin-bottom: 25px;">
+                                <table width="100%" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td>
+                                            <span
+                                                style="display: block; font-size: 12px; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Transaction
+                                                Amount</span>
+                                            <span
+                                                style="display: block; font-size: 26px; font-weight: 800; color: #00d4aa;">₹
+                                                {{ amount }}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 12px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
+                                        <span style="font-size: 13px; color: #64748b;">Reference</span>
+                                    </td>
+                                    <td align="right"
+                                        style="padding: 12px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
+                                        <span
+                                            style="font-size: 14px; font-family: 'Courier New', monospace; color: #f8fafc;">
+                                            {{ reference_number }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 0;">
+                                        <span style="font-size: 13px; color: #64748b;">Available Liquidity</span>
+                                    </td>
+                                    <td align="right" style="padding: 12px 0;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #f8fafc;">₹
+                                            {{ balance }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin: 0;">
+                                If you wish to escalate any concerns regarding this transaction, please use the secure
+                                messaging feature in your dashboard.
+                            </p>
+
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td
+                                        style="padding-top: 25px; border-top: 1px solid rgba(148, 163, 184, 0.1); margin-top: 25px;">
+                                        <p style="margin: 0; font-size: 14px; color: #94a3b8;">Refining wealth,</p>
+                                        <p
+                                            style="margin: 4px 0 0 0; font-size: 16px; font-weight: 600; color: #00d4aa;">
+                                            CapitalSphere Treasury</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="padding: 30px 40px; background-color: rgba(2, 6, 23, 0.5); border-top: 1px solid rgba(148, 163, 184, 0.05); text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.5;">
+                                &copy; 2026 CapitalSphere Private Banking. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
