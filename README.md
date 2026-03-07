@@ -97,6 +97,36 @@ erDiagram
 
 ---
 
+## 🔄 Transaction Workflow (Core Sequence)
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 User Agent
+    participant Frontend as 📱 React UI
+    participant Backend as ⚙️ Django API
+    participant DB as 🗄️ PostgreSQL
+
+    User->>Frontend: Fill transfer form & enter PIN
+    Frontend->>Backend: POST /api/transactions/transfer/ (encrypted)
+    Backend->>Backend: Validate JWT & User Session
+    Backend->>DB: Verify PIN & Sender Balance
+    alt PIN Valid & Sufficient Funds
+        Backend->>DB: Begin ATOMIC Transaction
+        Backend->>DB: Debit Sender Account
+        Backend->>DB: Credit Receiver Account
+        Backend->>DB: Create Transaction Record
+        Backend->>DB: Create Ledger Entries
+        Backend->>DB: Commit Transaction
+        Backend-->>Frontend: 201 Created (Success)
+        Frontend-->>User: Show Success Notification & Updated Balance
+    else PIN Invalid / Low Balance
+        Backend-->>Frontend: 400 Bad Request (Error Details)
+        Frontend-->>User: Show Error Highlight
+    end
+```
+
+---
+
 ## 🛠️ Technology Stack
 
 | Layer | Technologies |
