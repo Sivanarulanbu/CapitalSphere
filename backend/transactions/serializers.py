@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Transaction, Ledger
+from .models import Transaction, Ledger, ScheduledTransfer
 from accounts.models import Account
 
 
@@ -69,3 +69,18 @@ class LedgerSerializer(serializers.ModelSerializer):
             'id', 'reference', 'account_number', 'user_name',
             'entry_type', 'amount', 'balance_after', 'description', 'created_at'
         ]
+
+
+class ScheduledTransferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScheduledTransfer
+        fields = [
+            'id', 'sender_account', 'receiver_account_number', 'amount', 
+            'frequency', 'next_run_date', 'is_active', 'description', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def validate_sender_account(self, value):
+        if value.user != self.context['request'].user:
+            raise serializers.ValidationError("You do not have permission to schedule transfers from this account.")
+        return value

@@ -15,6 +15,7 @@ from .serializers import (
 from transactions.models import Transaction, Ledger
 from accounts.models import Account
 from users.models import AuditLog
+from users.services import get_client_ip
 import logging
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,16 @@ class LoanListCreateView(generics.ListCreateAPIView):
             return Response({'error': 'Invalid disbursement account.'}, status=status.HTTP_400_BAD_REQUEST)
 
         loan = serializer.save(user=request.user)
+        
+        # Audit Log
+        AuditLog.objects.create(
+            user=request.user,
+            action='loan_application',
+            ip_address=get_client_ip(request),
+            description=f"Applied for {loan.get_loan_type_display()} loan of ₹{loan.requested_amount}. Ref: {loan.id}",
+            is_success=True
+        )
+
         return Response(
             LoanApplicationSerializer(loan).data,
             status=status.HTTP_201_CREATED

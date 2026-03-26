@@ -27,6 +27,8 @@ export const accountService = {
     getBeneficiaries: () => api.get('/accounts/beneficiaries/'),
     addBeneficiary: (data) => api.post('/accounts/beneficiaries/', data),
     removeBeneficiary: (id) => api.delete(`/accounts/beneficiaries/${id}/`),
+    getVirtualCards: () => api.get('/accounts/cards/'),
+    createVirtualCard: (data) => api.post('/accounts/cards/', data),
 };
 
 export const transactionService = {
@@ -37,6 +39,9 @@ export const transactionService = {
     deposit: (data) => api.post('/transactions/deposit/', data),
     getStatement: (accountId, params) => api.get(`/transactions/statement/${accountId}/`, { params }),
     getAnalytics: () => api.get('/transactions/analytics/'),
+    getScheduledTransfers: () => api.get('/transactions/scheduled/'),
+    createScheduledTransfer: (data) => api.post('/transactions/scheduled/', data),
+    deleteScheduledTransfer: (id) => api.delete(`/transactions/scheduled/${id}/`),
 };
 
 export const loanService = {

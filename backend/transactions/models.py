@@ -100,3 +100,31 @@ class Ledger(models.Model):
 
     def __str__(self):
         return f"{self.entry_type} | {self.account.account_number} | {self.amount}"
+
+
+class ScheduledTransfer(models.Model):
+    FREQUENCY_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender_account = models.ForeignKey(
+        'accounts.Account', on_delete=models.CASCADE, related_name='scheduled_transfers'
+    )
+    receiver_account_number = models.CharField(max_length=20)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES)
+    next_run_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'scheduled_transfers'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.sender_account.account_number} -> {self.receiver_account_number} ({self.amount} {self.frequency})"

@@ -10,5 +10,7 @@ urlpatterns = [
     path('analytics/', views.TransactionAnalyticsView.as_view(), name='analytics'),
     path('flagged/', views.FlaggedTransactionListView.as_view(), name='flagged-transactions'),
     path('ledger/', views.LedgerListView.as_view(), name='ledger-list'),
+    path('scheduled/', views.ScheduledTransferListCreateView.as_view(), name='scheduled-list'),
+    path('scheduled/<uuid:pk>/', views.ScheduledTransferDetailView.as_view(), name='scheduled-detail'),
     path('<uuid:pk>/', views.TransactionDetailView.as_view(), name='transaction-detail'),
 ]

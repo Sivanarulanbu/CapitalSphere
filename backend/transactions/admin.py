@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Transaction
+from .models import Transaction, ScheduledTransfer
 
 
 @admin.register(Transaction)
@@ -18,3 +18,10 @@ class TransactionAdmin(admin.ModelAdmin):
         if obj:  # Editing existing
             return self.readonly_fields + ['amount', 'sender_account', 'receiver_account']
         return self.readonly_fields
+
+
+@admin.register(ScheduledTransfer)
+class ScheduledTransferAdmin(admin.ModelAdmin):
+    list_display = ['sender_account', 'receiver_account_number', 'amount', 'frequency', 'next_run_date', 'is_active']
+    list_filter = ['frequency', 'is_active', 'next_run_date']
+    search_fields = ['sender_account__account_number', 'receiver_account_number']

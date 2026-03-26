@@ -20,10 +20,15 @@ class LoginRateThrottle(AnonRateThrottle):
     rate = '5/minute'
 
 
+class AuthRateThrottle(AnonRateThrottle):
+    rate = '10/minute'
+
+
 class RegisterView(generics.CreateAPIView):
     """POST /api/auth/register"""
     permission_classes = [permissions.AllowAny]
     serializer_class = UserRegistrationSerializer
+    throttle_classes = [AuthRateThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -43,6 +48,7 @@ class VerifyOTPView(generics.GenericAPIView):
     """POST /api/auth/verify-otp"""
     permission_classes = [permissions.AllowAny]
     serializer_class = OTPVerifySerializer
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -125,6 +131,7 @@ class LoginVerifyOTPView(generics.GenericAPIView):
     """POST /api/auth/login/verify"""
     permission_classes = [permissions.AllowAny]
     serializer_class = OTPVerifySerializer
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -237,6 +244,7 @@ class ForgotPasswordView(generics.GenericAPIView):
     """POST /api/auth/forgot-password/"""
     permission_classes = [permissions.AllowAny]
     serializer_class = ForgotPasswordSerializer
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -277,6 +285,7 @@ class ResetPasswordView(generics.GenericAPIView):
 class ResendOTPView(generics.GenericAPIView):
     """POST /api/auth/resend-otp/"""
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         email = request.data.get('email')

@@ -82,3 +82,40 @@ class Beneficiary(models.Model):
 
     def __str__(self):
         return f"{self.beneficiary_name} ({self.account_number})"
+
+
+def generate_card_number():
+    """Generate a 16-digit card number starting with 4 (Visa)."""
+    return '4' + ''.join(random.choices(string.digits, k=15))
+
+class VirtualCard(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name='virtual_cards'
+    )
+    card_number = models.CharField(max_length=16, unique=True, default=generate_card_number)
+    cvv = models.CharField(max_length=3)
+    expiry_date = models.CharField(max_length=5) # MM/YY
+    is_active = models.BooleanField(default=True)
+    daily_spend_limit = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('50000.00'))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'virtual_cards'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"**** {self.card_number[-4:]} for {self.account.account_number}"
+
+    def save(self, *args, **kwargs):
+        if not self.cvv:
+            self.cvv = ''.join(random.choices(string.digits, k=3))
+        if not self.expiry_date:
+            import datetime
+            now = datetime.datetime.now()
+            # 3 years validity
+            expiry = now.replace(year=now.year + 3)
+            self.expiry_date = expiry.strftime('%m/%y')
+        super().save(*args, **kwargs)

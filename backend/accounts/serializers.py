@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Account, Beneficiary
+from .models import Account, Beneficiary, VirtualCard
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -44,3 +44,15 @@ class BeneficiarySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class VirtualCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VirtualCard
+        fields = ['id', 'account', 'card_number', 'cvv', 'expiry_date', 'is_active', 'daily_spend_limit', 'created_at']
+        read_only_fields = ['id', 'card_number', 'cvv', 'expiry_date', 'created_at']
+
+    def validate_account(self, value):
+        if value.user != self.context['request'].user:
+            raise serializers.ValidationError("You do not have permission to attach a card to this account.")
+        return value

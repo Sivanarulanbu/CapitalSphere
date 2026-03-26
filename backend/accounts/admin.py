@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Account, Beneficiary
+from .models import Account, Beneficiary, VirtualCard
 
 
 @admin.register(Account)
@@ -28,3 +28,11 @@ class BeneficiaryAdmin(admin.ModelAdmin):
     list_display = ['user', 'beneficiary_name', 'account_number', 'bank_name', 'is_active']
     list_filter = ['is_active', 'bank_name']
     search_fields = ['user__email', 'beneficiary_name', 'account_number']
+
+
+@admin.register(VirtualCard)
+class VirtualCardAdmin(admin.ModelAdmin):
+    list_display = ['account', 'card_number', 'is_active', 'daily_spend_limit', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['card_number', 'account__account_number', 'account__user__email']
+    readonly_fields = ['id', 'card_number', 'cvv', 'expiry_date', 'created_at']

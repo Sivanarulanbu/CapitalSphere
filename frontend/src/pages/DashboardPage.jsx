@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import BalanceTicker from '../components/BalanceTicker';
+import VirtualCardWidget from '../components/VirtualCardWidget';
 
 const COLORS = ['#6C63FF', '#00D4AA', '#FF6B6B', '#FFD700', '#3b82f6', '#f59e0b', '#10b981', '#ef4444'];
 const CAT_LABELS = {
@@ -28,6 +29,7 @@ export default function DashboardPage() {
     const [dashboard, setDashboard] = useState(null);
     const [recentTxns, setRecentTxns] = useState([]);
     const [analytics, setAnalytics] = useState({ spending: [], income: [] });
+    const [virtualCard, setVirtualCard] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,10 +37,17 @@ export default function DashboardPage() {
             accountService.getDashboard(),
             transactionService.getRecent(),
             transactionService.getAnalytics(),
-        ]).then(([dashRes, txnRes, anaRes]) => {
+            accountService.getVirtualCards().catch(() => ({ data: [] }))
+        ]).then(([dashRes, txnRes, anaRes, cardRes]) => {
             setDashboard(dashRes.data);
             const txns = txnRes.data.results || txnRes.data;
             setRecentTxns(Array.isArray(txns) ? txns : []);
+            
+            // Set Virtual Card
+            const cards = cardRes?.data?.results || cardRes?.data || [];
+            if (cards.length > 0) {
+                setVirtualCard(cards[0]);
+            }
 
             // Format analytics for Recharts
             const spendingData = (anaRes.data.spending || []).map(item => ({
@@ -55,6 +64,19 @@ export default function DashboardPage() {
     const getAccountTypeColor = (type) => {
         const map = { savings: 'bank-card-purple', current: 'bank-card-teal', fixed_deposit: 'bank-card-dark', salary: 'bank-card-purple' };
         return map[type] || 'bank-card-purple';
+    };
+
+    const handleCreateCard = async (accountId) => {
+        try {
+            setLoading(true);
+            const res = await accountService.createVirtualCard({ account: accountId });
+            setVirtualCard(res.data);
+        } catch (error) {
+            console.error("Failed to create card", error);
+            alert("Failed to generate virtual card. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) return (
@@ -104,12 +126,20 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Bank Cards + Quick Actions */}
+            {/* Virtual Cards + Accounts */}
             <div className="grid-2 mb-3">
+                {/* Virtual Card */}
+                <div>
+                    <div className="section-header">
+                        <span className="section-title">My Virtual Card</span>
+                    </div>
+                    <VirtualCardWidget card={virtualCard} accounts={dashboard?.accounts} onCreate={handleCreateCard} loading={loading} />
+                </div>
+
                 {/* Account Cards */}
                 <div>
                     <div className="section-header">
-                        <span className="section-title">My Accounts</span>
+                        <span className="section-title">Bank Accounts</span>
                         <button className="btn btn-secondary btn-sm" onClick={() => navigate('/accounts')}>View All</button>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -143,12 +173,13 @@ export default function DashboardPage() {
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Quick Actions + KYC status */}
-                <div>
-                    <div className="section-header">
-                        <span className="section-title">Quick Actions</span>
-                    </div>
+            {/* Quick Actions Matrix */}
+            <div className="mb-3">
+                <div className="section-header">
+                    <span className="section-title">Quick Actions</span>
+                </div>
                     <div className="card" style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             {[
@@ -166,7 +197,7 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* KYC Banner */}
+                    {/* KYC Banner overlaying next to Quick Actions theoretically, but keeping below for flow */}
                     {user?.kyc_status !== 'verified' && (
                         <div className="alert alert-warning">
                             <span>⚠️</span>
@@ -178,7 +209,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     )}
-                </div>
             </div>
 
             {/* AI Spending Insights */}

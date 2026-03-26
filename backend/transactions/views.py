@@ -3,8 +3,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Transaction, Ledger
-from .serializers import TransactionSerializer, TransferInitiateSerializer, DepositInitiateSerializer, LedgerSerializer
+from .models import Transaction, Ledger, ScheduledTransfer
+from .serializers import (
+    TransactionSerializer, TransferInitiateSerializer, 
+    DepositInitiateSerializer, LedgerSerializer, ScheduledTransferSerializer
+)
 from .services import TransferService, SelfDepositService
 from accounts.models import Account
 from django.db.models import Sum
@@ -204,3 +207,20 @@ class LedgerListView(generics.ListAPIView):
         if not self.request.user.is_admin:
             return Ledger.objects.none()
         return Ledger.objects.all().select_related('transaction', 'account', 'account__user').order_by('-created_at')
+
+
+class ScheduledTransferListCreateView(generics.ListCreateAPIView):
+    """GET/POST /api/transactions/scheduled/"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ScheduledTransferSerializer
+
+    def get_queryset(self):
+        return ScheduledTransfer.objects.filter(sender_account__user=self.request.user)
+
+class ScheduledTransferDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET/PATCH/DELETE /api/transactions/scheduled/<id>/"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ScheduledTransferSerializer
+
+    def get_queryset(self):
+        return ScheduledTransfer.objects.filter(sender_account__user=self.request.user)

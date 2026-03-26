@@ -17,7 +17,7 @@ class TransferService:
     """
 
     @staticmethod
-    def execute_transfer(sender_account_id, receiver_account_number, amount, pin, user, description=''):
+    def execute_transfer(sender_account_id, receiver_account_number, amount, pin, user, description='', bypass_pin=False):
         """
         Perform an atomic fund transfer.
         Returns (success: bool, message: str, transaction: Transaction|None)
@@ -25,11 +25,12 @@ class TransferService:
         amount = Decimal(str(amount))
 
         # Verify transaction PIN
-        if not user.transaction_pin:
-            return False, 'Transaction PIN not set. Please set your PIN first.', None
+        if not bypass_pin:
+            if not user.transaction_pin:
+                return False, 'Transaction PIN not set. Please set your PIN first.', None
 
-        if not check_password(pin, user.transaction_pin):
-            return False, 'Invalid transaction PIN.', None
+            if not check_password(pin, user.transaction_pin):
+                return False, 'Invalid transaction PIN.', None
 
         if amount <= Decimal('0'):
             return False, 'Transfer amount must be greater than zero.', None
@@ -179,6 +180,14 @@ class SelfDepositService:
                     amount=amount,
                     balance_after=account.balance,
                     description=f"External credit/self-deposit"
+                )
+                
+                # Audit Log
+                AuditLog.objects.create(
+                    user=user,
+                    action='deposit',
+                    description=f"Self-deposited ₹{amount} to {account.account_number}. Reference: {txn.reference_number}",
+                    is_success=True
                 )
                 
                 logger.info(f"Self Deposit {txn.reference_number}: ₹{amount} to {account.account_number}")

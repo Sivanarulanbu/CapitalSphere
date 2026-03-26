@@ -4,10 +4,12 @@ import { accountService, transactionService } from '../services/bankService';
 import { formatCurrency } from '../components/TransactionRow';
 import { ArrowRight, ShieldCheck, CheckCircle2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AutomatedPayments from '../components/AutomatedPayments';
 
 const STEPS = ['Select Account', 'Enter Details', 'Confirm & Pay'];
 
 export default function TransferPage() {
+    const [activeTab, setActiveTab] = useState('one-time');
     const [step, setStep] = useState(0);
     const [accounts, setAccounts] = useState([]);
     const [beneficiaries, setBeneficiaries] = useState([]);
@@ -96,8 +98,22 @@ export default function TransferPage() {
 
     return (
         <Layout title="Transfer Money">
-            <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                {/* Steps indicator */}
+            <div style={{ maxWidth: 700, margin: '0 auto', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.1rem' }}>
+                    <button className="btn btn-ghost" style={{ borderBottom: activeTab === 'one-time' ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, paddingBottom: '0.75rem', fontWeight: activeTab === 'one-time' ? 700 : 500 }} onClick={() => setActiveTab('one-time')}>
+                        One-Time Transfer
+                    </button>
+                    <button className="btn btn-ghost" style={{ borderBottom: activeTab === 'scheduled' ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, paddingBottom: '0.75rem', fontWeight: activeTab === 'scheduled' ? 700 : 500 }} onClick={() => setActiveTab('scheduled')}>
+                        Automated Payments
+                    </button>
+                </div>
+            </div>
+
+            {activeTab === 'scheduled' ? (
+                <AutomatedPayments accounts={accounts} beneficiaries={beneficiaries} />
+            ) : (
+                <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                    {/* Steps indicator */}
                 <div className="steps mb-3">
                     {STEPS.map((label, i) => (
                         <div key={i} className="step-item">
@@ -223,7 +239,8 @@ export default function TransferPage() {
                         </div>
                     </form>
                 )}
-            </div>
+                </div>
+            )}
         </Layout>
     );
 }

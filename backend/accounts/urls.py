@@ -7,4 +7,6 @@ urlpatterns = [
     path('<uuid:pk>/', views.AccountDetailView.as_view(), name='account-detail'),
     path('beneficiaries/', views.BeneficiaryListCreateView.as_view(), name='beneficiary-list'),
     path('beneficiaries/<int:pk>/', views.BeneficiaryDetailView.as_view(), name='beneficiary-detail'),
+    path('cards/', views.VirtualCardListCreateView.as_view(), name='card-list'),
+    path('cards/<uuid:pk>/', views.VirtualCardDetailView.as_view(), name='card-detail'),
 ]
