@@ -48,8 +48,9 @@ class AccountDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        from django.db.models import Sum
         accounts = Account.objects.filter(user=request.user, status='active')
-        total_balance = sum(a.balance for a in accounts)
+        total_balance = accounts.aggregate(total=Sum('balance'))['total'] or 0
         return Response({
             'total_balance': str(total_balance),
             'account_count': accounts.count(),

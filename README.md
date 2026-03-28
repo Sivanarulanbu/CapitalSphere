@@ -14,6 +14,11 @@ CapitalSphere is a professional, high-trust digital banking application built us
 - **Account Management**: Support for Savings, Current, FD, and Salary accounts.
 - **Modern Dashboard**: Real-time balance tracking and financial analytics using Recharts.
 
+### 💳 Advanced Capabilities (New)
+- **Virtual Cards Widget**: Generate dynamic, instantly usable digital cards linked to any account with robust security parameters.
+- **Automated Payments**: Configure recurring, scheduled transfers (daily, weekly, monthly) using a cron-like architecture.
+- **High-Performance Architecture**: Includes React code-splitting (`React.lazy`), batch-deduplication, and advanced Django QuerySet optimizations mitigating N+1 bottlenecks.
+
 ### 💸 Transactions & Loans
 - **Fund Transfers**: Secure transfers between accounts with transaction PIN validation.
 - **Beneficiary Management**: Save frequently used account details.
@@ -66,6 +71,8 @@ erDiagram
     ACCOUNT ||--o{ TRANSACTION : sources
     ACCOUNT ||--o{ TRANSACTION : receives
     ACCOUNT ||--o{ LEDGER : records
+    ACCOUNT ||--o{ VIRTUAL_CARD : linked_to
+    ACCOUNT ||--o{ SCHEDULED_TRANSFER : schedules
     
     TRANSACTION ||--o{ LEDGER : split_into
     
@@ -92,6 +99,22 @@ erDiagram
         string type
         string status
         string reference_number
+    }
+
+    VIRTUAL_CARD {
+        uuid id PK
+        string card_number
+        string cvv
+        string expiry_date
+        decimal daily_spend_limit
+    }
+
+    SCHEDULED_TRANSFER {
+        uuid id PK
+        decimal amount
+        string frequency
+        string next_run_date
+        string receiver_account_number
     }
 ```
 

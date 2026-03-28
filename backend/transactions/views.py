@@ -121,7 +121,7 @@ class AccountStatementView(APIView):
         transactions = Transaction.objects.filter(
             Q(sender_account=account) | Q(receiver_account=account),
             status='completed'
-        ).select_related('sender_account__user', 'receiver_account__user').order_by('-created_at')
+        ).select_related('sender_account', 'receiver_account', 'sender_account__user', 'receiver_account__user').order_by('-created_at')
 
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
@@ -195,7 +195,7 @@ class FlaggedTransactionListView(generics.ListAPIView):
     def get_queryset(self):
         if not self.request.user.is_admin:
             return Transaction.objects.none()
-        return Transaction.objects.filter(is_flagged=True).order_by('-created_at')
+        return Transaction.objects.filter(is_flagged=True).select_related('sender_account', 'receiver_account', 'sender_account__user', 'receiver_account__user').order_by('-created_at')
 
 
 class LedgerListView(generics.ListAPIView):

@@ -275,7 +275,7 @@ export default function DashboardPage() {
                             <div style={{ textAlign: 'right' }}>
                                 <div className="text-muted text-xs">TOP CATEGORY</div>
                                 <div className="text-gradient" style={{ fontWeight: 700 }}>
-                                    {analytics.spending.sort((a, b) => b.value - a.value)[0]?.name.split(' ')[1] || 'None'}
+                                    {[...analytics.spending].sort((a, b) => b.value - a.value)[0]?.name.split(' ')[1] || 'None'}
                                 </div>
                             </div>
                         </div>

@@ -30,14 +30,16 @@ export default function TransactionsPage() {
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchTxns(page); }, [page]);
-    useEffect(() => { setPage(1); fetchTxns(1); }, [filters]);
+    useEffect(() => { fetchTxns(page); }, [page, filters]);
 
     useEffect(() => {
         accountService.getAll().then(r => setAccounts(r.data.results || r.data));
     }, []);
 
-    const handleFilter = (e) => setFilters(p => ({ ...p, [e.target.name]: e.target.value }));
+    const handleFilter = (e) => {
+        setFilters(p => ({ ...p, [e.target.name]: e.target.value }));
+        setPage(1);
+    };
 
     return (
         <Layout title="Transactions">
