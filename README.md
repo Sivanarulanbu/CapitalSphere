@@ -32,6 +32,28 @@ CapitalSphere is a professional, high-trust digital banking application built us
 
 ---
 
+## 🏛️ System Hardening & Enterprise Features
+
+To elevate the platform from feature-complete to production-ready, multiple asynchronous and strict database-level architectural patterns have been implemented:
+
+### 💥 Transaction Consistency & Core Stability
+- **Deadlock Prevention (Ordered DB Locks)**: PostgreSQL `select_for_update` calls are structurally ordered (`acc_ids = sorted([sender_id, receiver_id])`) before query execution, ensuring cross-transfer threads never trigger database deadlocks.
+- **Idempotent APIs**: Core payment and transfer endpoints strictly require and validate `Idempotency-Key` headers against the transaction ledger, unconditionally preventing duplicate executions during network retries.
+
+### 🛡️ Fraud & Risk Engine
+- **IP / Geo Anomaly Tracking**: Advanced risk-scoring engine compares structural bound elements like explicit `client_ip` against the previously logged active sessions (`last_login_ip`).
+- **Immediate Hard-Blocks**: Thresholding triggers (+30 score per anomaly). Transactions breaching severe composite risk scores (>=90) immediately raise exception kill-switches, bypassing standard evaluation and securely reverting all Atomic sequences.
+
+### 🔐 Security & Trust
+- **Token Revocation (Logout Auditing)**: SimpleJWT token blacklisting naturally invalidates tokens the moment a session closes.
+- **Granular Payload Throttling**: Pre-configured DRF API rate-limiters (`AnonRateThrottle`, `UserRateThrottle`) block brute forcing across identity and transfer endpoints.
+
+### ⏱️ Async Processing & Scalability (Celery + Redis)
+- **Decoupled Job Queues**: Heavy latency-bound workloads (such as generating and compiling HTML templates for internal OTP SMTP relays) are offloaded onto local Celery background workers.
+- **Automated Queueing (Celery Beat)**: Scheduled, daily interval automation pushes pre-configured scheduled transfers robustly via dedicated idempotency tags, bypassing fragile sleep loops or raw cron hacks.
+
+---
+
 ## 🏛️ System Architecture
 
 ```mermaid

@@ -17,11 +17,16 @@ class TransferService:
     """
 
     @staticmethod
-    def execute_transfer(sender_account_id, receiver_account_number, amount, pin, user, description='', bypass_pin=False):
+    def execute_transfer(sender_account_id, receiver_account_number, amount, pin, user, description='', bypass_pin=False, idempotency_key=None, client_ip=None):
         """
         Perform an atomic fund transfer.
         Returns (success: bool, message: str, transaction: Transaction|None)
         """
+        if idempotency_key:
+            existing_txn = Transaction.objects.filter(idempotency_key=idempotency_key).first()
+            if existing_txn:
+                return True, 'Transfer already completed (Idempotent replay).', existing_txn
+
         amount = Decimal(str(amount))
 
         # Verify transaction PIN
@@ -39,11 +44,26 @@ class TransferService:
             return False, 'Transfer amount exceeds daily limit of ₹1,00,000.', None
 
         try:
+            # First fetch receiver to identify ID without locking
+            target = Account.objects.get(account_number=receiver_account_number)
+        except Account.DoesNotExist:
+            return False, 'Receiver account not found.', None
+
+        if str(sender_account_id) == str(target.id):
+            return False, 'Cannot transfer to the same account.', None
+
+        # To prevent postgres deadlocks, we must sort the IDs and lock in consistent order
+        acc_ids = sorted([str(sender_account_id), str(target.id)])
+
+        try:
             with db_transaction.atomic():
-                # Lock sender account row
-                sender = Account.objects.select_for_update().get(
-                    id=sender_account_id, user=user
-                )
+                # Lock rows sequentially
+                Account.objects.select_for_update().get(id=acc_ids[0])
+                Account.objects.select_for_update().get(id=acc_ids[1])
+
+                # Get the securely locked instances
+                sender = Account.objects.get(id=sender_account_id, user=user)
+                receiver = Account.objects.get(id=target.id)
 
                 if sender.status != 'active':
                     return False, f'Your account is {sender.status}. Cannot transfer.', None
@@ -51,19 +71,8 @@ class TransferService:
                 if sender.balance < amount:
                     return False, f'Insufficient balance. Available: ₹{sender.balance}', None
 
-                # Lock receiver account row
-                try:
-                    receiver = Account.objects.select_for_update().get(
-                        account_number=receiver_account_number
-                    )
-                except Account.DoesNotExist:
-                    return False, 'Receiver account not found.', None
-
                 if receiver.status != 'active':
                     return False, 'Receiver account is not active.', None
-
-                if sender.id == receiver.id:
-                    return False, 'Cannot transfer to the same account.', None
 
                 # Deduct from sender
                 sender.balance -= amount
@@ -73,7 +82,7 @@ class TransferService:
                 receiver.balance += amount
                 receiver.save(update_fields=['balance', 'updated_at'])
 
-                # Fraud Detection Logic (Simple)
+                # Fraud Detection Logic
                 risk_score = 0
                 if amount > Decimal('50000'):
                     risk_score += 30  # High value
@@ -89,7 +98,15 @@ class TransferService:
                 if recent_count > 2:
                     risk_score += 40  # Rapid transfers
 
+                # IP / Geo-location anomaly checks
+                if client_ip and client_ip != getattr(user, 'last_login_ip', None):
+                    risk_score += 30  # Device/IP mismatch
+                    logger.warning(f"IP mismatch detected for user {user.email}. Expected: {getattr(user, 'last_login_ip', 'unknown')}, Got: {client_ip}")
+
                 is_flagged = risk_score >= 70
+                # Block the transaction immediately if extremely high risk
+                if risk_score >= 90:
+                    raise Exception("Transaction blocked by Fraud Engine due to extreme Risk Score.")
 
                 # Create transaction record
                 txn = Transaction.objects.create(
@@ -98,6 +115,7 @@ class TransferService:
                     amount=amount,
                     transaction_type='transfer',
                     status='completed',
+                    idempotency_key=idempotency_key,
                     description=description or f'Transfer to {receiver.user.full_name}',
                     sender_balance_after=sender.balance,
                     receiver_balance_after=receiver.balance,
@@ -129,6 +147,7 @@ class TransferService:
                 AuditLog.objects.create(
                     user=user,
                     action='transfer',
+                    ip_address=client_ip,
                     description=f"Transferred ₹{amount} to {receiver.account_number}. Reference: {txn.reference_number}. Risk: {risk_score}",
                     is_success=True
                 )

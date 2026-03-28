@@ -96,7 +96,9 @@ class TransferView(APIView):
             amount=data['amount'],
             pin=data['pin'],
             user=request.user,
-            description=data.get('description', '')
+            description=data.get('description', ''),
+            idempotency_key=request.headers.get('Idempotency-Key'),
+            client_ip=get_client_ip(request)
         )
 
         if success:
