@@ -72,6 +72,14 @@ class VerifyOTPView(generics.GenericAPIView):
             user.is_verified = True
             user.save()
 
+            from .tasks import send_action_email_task
+            send_action_email_task.delay(
+                user.email, getattr(user, 'full_name', 'Customer'),
+                title="Welcome to CapitalSphere",
+                subject="CapitalSphere: Account Activated",
+                message="Your account has been actively established and successfully verified. Welcome to the future of digital banking."
+            )
+
             # Issue tokens after email verification
             refresh = RefreshToken.for_user(user)
             return Response({
@@ -159,6 +167,14 @@ class LoginVerifyOTPView(generics.GenericAPIView):
             user=user,
             ip_address=get_client_ip(request),
             device_info=request.META.get('HTTP_USER_AGENT', '')[:255]
+        )
+
+        from .tasks import send_action_email_task
+        send_action_email_task.delay(
+            user.email, getattr(user, 'full_name', 'Customer'),
+            title="New Login Alert",
+            subject="CapitalSphere: Security Alert - New Account Login",
+            message=f"We detected a fresh login session to your account originating from IP: <b>{get_client_ip(request)}</b>.<br><br>If this was not authorized by you, secure your account instantly."
         )
 
         # Audit log for successful 2FA
@@ -279,6 +295,15 @@ class ResetPasswordView(generics.GenericAPIView):
 
         user.set_password(serializer.validated_data['new_password'])
         user.save()
+
+        from .tasks import send_action_email_task
+        send_action_email_task.delay(
+            user.email, getattr(user, 'full_name', 'Customer'),
+            title="Password Reset Successful",
+            subject="CapitalSphere: Password Changed",
+            message="Your account password was just successfully reset. If you did not formulate this change, please contact support urgently."
+        )
+
         return Response({'message': 'Password reset successfully. Please login.'})
 
 
@@ -319,6 +344,14 @@ class KYCUploadView(generics.CreateAPIView):
             ip_address=get_client_ip(self.request),
             description=f"Uploaded KYC Document: {serializer.validated_data['document_type']}",
             is_success=True
+        )
+
+        from .tasks import send_action_email_task
+        send_action_email_task.delay(
+            user.email, getattr(user, 'full_name', 'Customer'),
+            title="KYC Documents Submitted",
+            subject="CapitalSphere: Verification Pending",
+            message="We have successfully archived your requested KYC documentation. Our regulatory compliance team will review your submission shortly via a manual visual check."
         )
 
 class UserAuditLogView(generics.ListAPIView):

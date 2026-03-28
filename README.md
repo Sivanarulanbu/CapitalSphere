@@ -52,6 +52,13 @@ To elevate the platform from feature-complete to production-ready, multiple asyn
 - **Decoupled Job Queues**: Heavy latency-bound workloads (such as generating and compiling HTML templates for internal OTP SMTP relays) are offloaded onto local Celery background workers.
 - **Automated Queueing (Celery Beat)**: Scheduled, daily interval automation pushes pre-configured scheduled transfers robustly via dedicated idempotency tags, bypassing fragile sleep loops or raw cron hacks.
 
+### 📧 Comprehensive Notification Engine (SMTP)
+An extensive array of system events automatically triggers highly-structured, responsive glassmorphic email templates asynchronously:
+- **Core Access**: Registration, Password Reset, Dynamic Account Lockouts (on 5 failed strikes), and IP-traced New Login Alerts.
+- **Banking Operations**: Successful Transfer receipts (Sender/Receiver), Fraud-Blocked Interception warnings, and Low Balance Critical dips (< ₹1,000).
+- **Loan Lifecycles**: Applications Submitted, Approved, Rejected, and Automated 3-Day Upcoming EMI payment reminders.
+- **KYC Pipeline**: Documentation Submission Acknowledgements.
+
 ---
 
 ## 🏛️ System Architecture

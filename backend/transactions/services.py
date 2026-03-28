@@ -106,6 +106,13 @@ class TransferService:
                 is_flagged = risk_score >= 70
                 # Block the transaction immediately if extremely high risk
                 if risk_score >= 90:
+                    from users.tasks import send_action_email_task
+                    send_action_email_task.delay(
+                        user.email, getattr(user, 'full_name', 'Customer'),
+                        title="Suspicious Activity Prevented",
+                        subject="CapitalSphere: High Risk Blocked",
+                        message=f"We proactively blocked a transfer attempt of ₹{amount} that violated our security threshold limit. Please verify your identity settings and contact support."
+                    )
                     raise Exception("Transaction blocked by Fraud Engine due to extreme Risk Score.")
 
                 # Create transaction record
@@ -154,8 +161,48 @@ class TransferService:
 
                 if is_flagged:
                     logger.warning(f"SUSPICIOUS TRANSFER FLAGGED: {txn.reference_number} for user {user.email}")
+                    from users.tasks import send_action_email_task
+                    send_action_email_task.delay(
+                        user.email, getattr(user, 'full_name', 'Customer'),
+                        title="Suspicious Transfer Flagegd",
+                        subject="CapitalSphere: Transfer Flagged for Review",
+                        message=f"We flagged an unusually high-risk transfer attempt of ₹{amount} from your account to {receiver.account_number}. Please review your account for unauthorized access."
+                    )
 
                 logger.info(f"Transfer {txn.reference_number}: ₹{amount} from {sender.account_number} to {receiver.account_number}")
+                
+                # Successful transfer emails
+                from users.tasks import send_action_email_task
+                send_action_email_task.delay(
+                    user.email, getattr(user, 'full_name', 'Customer'),
+                    title="Transfer Successful",
+                    subject="CapitalSphere: Transfer Successful",
+                    message=f"You successfully transferred ₹{amount} to account ending in {receiver.account_number[-4:]}. Your new balance is ₹{sender.balance}.",
+                    action_text="View Statement",
+                    action_url="http://localhost:5173/transactions"
+                )
+
+                # Receiver alert
+                send_action_email_task.delay(
+                    receiver.user.email, getattr(receiver.user, 'full_name', 'Customer'),
+                    title="Funds Received",
+                    subject="CapitalSphere: Funds Received",
+                    message=f"You successfully received ₹{amount} from account ending in {sender.account_number[-4:]}. Your new balance is ₹{receiver.balance}.",
+                    action_text="View Dashboard",
+                    action_url="http://localhost:5173/dashboard"
+                )
+
+                # Low Balance Alert
+                if sender.balance < Decimal('1000') and (sender.balance + amount) >= Decimal('1000'):
+                    send_action_email_task.delay(
+                        user.email, getattr(user, 'full_name', 'Customer'),
+                        title="Low Balance Warning",
+                        subject="CapitalSphere: Action Needed - Low Balance",
+                        message=f"Following your last transaction, your account balance has dipped critically below ₹1,000 to precisely ₹{sender.balance}. Please deposit funds to evade penalty fees.",
+                        action_text="Deposit Funds",
+                        action_url="http://localhost:5173/dashboard"
+                    )
+
                 return True, 'Transfer successful.', txn
 
         except Account.DoesNotExist:

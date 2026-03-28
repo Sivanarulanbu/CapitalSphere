@@ -14,4 +14,8 @@ app.conf.beat_schedule = {
         'task': 'transactions.tasks.process_scheduled_transfers',
         'schedule': crontab(hour=0, minute=0), # Run exactly at midnight every day
     },
+    'process-emi-reminders-daily': {
+        'task': 'loans.tasks.process_emi_reminders',
+        'schedule': crontab(hour=8, minute=0), # Fire automatically at 8 AM
+    },
 }

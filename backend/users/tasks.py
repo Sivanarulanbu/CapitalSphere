@@ -42,3 +42,36 @@ def send_otp_email_task(otp_id):
         logger.info(f"OTP email sent for user {user.email}")
     except Exception as e:
         logger.error(f"Failed to send OTP email: {e}")
+
+@shared_task
+def send_action_email_task(user_email, user_full_name, title, subject, message, action_url=None, action_text=None):
+    try:
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = [user_email]
+        
+        context = {
+            'user_name': user_full_name,
+            'title': title,
+            'message': message,
+            'action_url': action_url,
+            'action_text': action_text,
+            'year': 2026,
+        }
+        
+        html_content = render_to_string('emails/action_email.html', context)
+        text_content = strip_tags(html_content)
+        
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        msg.attach_alternative(html_content, "text/html")
+        
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'brand', 'logo.png')
+        if os.path.exists(logo_path):
+            with open(logo_path, 'rb') as f:
+                logo_image = MIMEImage(f.read())
+                logo_image.add_header('Content-ID', '<logo.png>')
+                msg.attach(logo_image)
+                
+        msg.send(fail_silently=False)
+        logger.info(f"Action email '{title}' sent to {user_email}")
+    except Exception as e:
+        logger.error(f"Failed to send action email '{title}': {e}")

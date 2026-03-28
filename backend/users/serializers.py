@@ -31,12 +31,37 @@ class UserLoginSerializer(serializers.Serializer):
     login_type = serializers.CharField(required=False)
 
     def validate(self, data):
-        user = authenticate(email=data['email'], password=data['password'])
-        if not user:
+        email_input = data['email']
+        password_input = data['password']
+        
+        try:
+            user_obj = User.objects.get(email=email_input)
+        except User.DoesNotExist:
             raise serializers.ValidationError('Invalid email or password.')
-        if not user.is_active:
-            raise serializers.ValidationError('Account is deactivated. Contact support.')
             
+        if not user_obj.is_active:
+            raise serializers.ValidationError('Account is deactivated. Contact support.')
+
+        user = authenticate(email=email_input, password=password_input)
+        
+        if not user:
+            user_obj.failed_login_attempts += 1
+            if user_obj.failed_login_attempts >= 5:
+                user_obj.is_active = False
+                user_obj.save()
+                
+                from users.tasks import send_action_email_task
+                send_action_email_task.delay(
+                    user_obj.email, getattr(user_obj, 'full_name', 'Customer'),
+                    title="Account System Locked",
+                    subject="CapitalSphere: Action Required - Account Locked",
+                    message="Your account was dynamically locked due to 5 consecutive failed login attempts. To restore access, please initiate our password recovery protocol or call security support immediately."
+                )
+                raise serializers.ValidationError('Account locked due to too many failed attempts.')
+                
+            user_obj.save(update_fields=['failed_login_attempts'])
+            raise serializers.ValidationError('Invalid email or password.')
+
         login_type = data.get('login_type')
         if login_type == 'banker' and not (getattr(user, 'is_admin', False) or getattr(user, 'is_loan_officer', False)):
             raise serializers.ValidationError('This email is not registered as a Banker.')

@@ -95,6 +95,14 @@ class LoanListCreateView(generics.ListCreateAPIView):
             is_success=True
         )
 
+        from users.tasks import send_action_email_task
+        send_action_email_task.delay(
+            request.user.email, getattr(request.user, 'full_name', 'Customer'),
+            title="Loan Application Received",
+            subject="CapitalSphere: Loan Application Pending",
+            message=f"We have safely received your application concerning a structured {loan.get_loan_type_display()} loan scaling up to ₹{loan.requested_amount}. Our assigned Loan Officers will evaluate your request shortly."
+        )
+
         return Response(
             LoanApplicationSerializer(loan).data,
             status=status.HTTP_201_CREATED
@@ -209,6 +217,22 @@ class LoanReviewView(APIView):
                 description=f"{data['action'].capitalize()}ed loan for {loan.user.full_name}. Ref: {loan.id}. Amount: {loan.approved_amount or 0}",
                 is_success=True
             )
+
+            from users.tasks import send_action_email_task
+            if data['action'] == 'approve':
+                send_action_email_task.delay(
+                    loan.user.email, getattr(loan.user, 'full_name', 'Customer'),
+                    title="Loan Application Approved",
+                    subject="CapitalSphere: Loan Application Verified & Approved",
+                    message=f"Outstanding news! Your application encompassing the {loan.get_loan_type_display()} loan was unconditionally analyzed and fully approved for ₹{loan.approved_amount}. The funds have been queued for immediate disbursement."
+                )
+            elif data['action'] == 'reject':
+                send_action_email_task.delay(
+                    loan.user.email, getattr(loan.user, 'full_name', 'Customer'),
+                    title="Loan Application Declined",
+                    subject="CapitalSphere: Loan Application Status Update",
+                    message=f"Following an extensive assessment, we regret avoiding to process your {loan.get_loan_type_display()} loan framework presently due to: {data.get('rejection_reason', 'Policy Threshold Deviations')}."
+                )
 
         return Response({
             'message': status_msg,
